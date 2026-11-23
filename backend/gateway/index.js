@@ -8,12 +8,21 @@ import { getCurrentUser } from "./controllers/user.controller.js"
 import protect from "./middleware/auth.middleware.js"
 import { proxyWithHeader } from "./utils/proxyWithHeader.js"
 import morgan from "morgan"
-const port =process.env.PORT
+const port = process.env.PORT || 8000
+const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map(url => url.trim().replace(/\/$/, ""))
+    : ["http://localhost:5173", "http://localhost:5175"];
 
-const app=express()
+const app = express()
 app.use(cors({
-    origin:process.env.FRONTEND_URL,
-    credentials:true
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+    },
+    credentials: true
 }))
 app.use(morgan("dev"))
 app.use(cookieParser())
